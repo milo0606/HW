@@ -522,9 +522,14 @@
             
             if (car) {
                 modalTitle.textContent = 'Editar Auto';
-                ['carId', 'model', 'brand', 'series', 'serialNumber', 'cost', 'purchaseDate', 'purchasePlace'].forEach(id => {
-                    document.getElementById(id).value = car[id] || '';
-                });
+                document.getElementById('carId').value = car.id;
+                document.getElementById('model').value = car.model || '';
+                document.getElementById('brand').value = car.brand || '';
+                document.getElementById('series').value = car.series || '';
+                document.getElementById('serialNumber').value = car.serialNumber || '';
+                document.getElementById('cost').value = car.cost || 0;
+                document.getElementById('purchaseDate').value = car.purchaseDate || '';
+                document.getElementById('purchasePlace').value = car.purchasePlace || '';
                 photoPreview.src = car.photoBase64 || placeholder;
                 deleteCarFromModalBtn.classList.remove('hidden');
             } else {
