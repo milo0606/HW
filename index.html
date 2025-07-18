@@ -6,6 +6,9 @@
     <title>Mi Colección Hot Wheels</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" id="manifestLink">
+    <meta name="theme-color" content="#ffffff">
     <!-- Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
@@ -13,7 +16,7 @@
             font-family: 'Inter', sans-serif;
         }
         .modal-backdrop, #sidebar-overlay {
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
             transition: opacity 0.3s ease;
         }
         .modal-content, #sidebar {
@@ -109,9 +112,9 @@
             </button>
         </div>
 
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <div class="relative">
+        <!-- Search Bar & Count -->
+        <div class="mb-6 flex flex-col sm:flex-row gap-4 items-center">
+            <div class="relative flex-grow w-full">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -119,6 +122,7 @@
                 </div>
                 <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Buscar por modelo...">
             </div>
+            <p id="carCount" class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap"></p>
         </div>
         
         <div id="loading" class="text-center py-10"><p class="text-gray-500 dark:text-gray-400">Cargando tu colección...</p></div>
@@ -154,50 +158,55 @@
     <!-- Add/Edit Modal -->
     <div id="carModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto modal-backdrop">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 max-w-4xl m-4 modal-content">
-            <form id="carForm" class="p-6 space-y-4">
-                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Agregar Nuevo Auto</h2>
+            <form id="carForm" class="p-6">
+                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Agregar Nuevo Auto</h2>
                 <input type="hidden" id="carId">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modelo</label>
-                        <input type="text" id="model" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
-                        <input type="text" id="brand" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="series" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Serie</label>
-                        <input type="text" id="series" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="serialNumber" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Número de Serie</label>
-                        <input type="text" id="serialNumber" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label for="cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Costo</label>
-                        <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="purchaseDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Compra</label>
-                        <input type="date" id="purchaseDate" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="purchasePlace" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lugar de Compra</label>
-                        <input type="text" id="purchasePlace" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto del Auto</label>
-                        <div class="mt-1 flex items-center gap-4">
-                            <img id="photoPreview" src="https://placehold.co/100x100/e0e0e0/666?text=Foto" class="h-24 w-24 rounded-md object-cover bg-gray-200">
-                            <input type="file" id="photoFile" class="hidden" accept="image/*">
-                            <button type="button" id="selectPhotoBtn" class="bg-white dark:bg-gray-700 dark:hover:bg-gray-600 py-2 px-3 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Seleccionar foto</button>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modelo</label>
+                            <input type="text" id="model" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
+                            <input type="text" id="brand" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="series" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Serie</label>
+                            <input type="text" id="series" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="serialNumber" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Número de Serie</label>
+                            <input type="text" id="serialNumber" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Costo</label>
+                            <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="purchaseDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Compra</label>
+                            <input type="date" id="purchaseDate" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="purchasePlace" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lugar de Compra</label>
+                            <input type="text" id="purchasePlace" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto del Auto</label>
+                            <div class="mt-1 flex items-center gap-4">
+                                <img id="photoPreview" src="https://placehold.co/100x100/e0e0e0/666?text=Foto" class="h-24 w-24 rounded-md object-cover bg-gray-200">
+                                <input type="file" id="photoFile" class="hidden" accept="image/*">
+                                <button type="button" id="selectPhotoBtn" class="bg-white dark:bg-gray-700 dark:hover:bg-gray-600 py-2 px-3 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Seleccionar foto</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-end space-x-4 pt-4">
-                    <button type="button" id="cancelBtn" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition duration-300">Cancelar</button>
-                    <button type="submit" id="saveBtn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300">Guardar</button>
+                <div class="flex justify-between items-center pt-6">
+                    <button type="button" id="deleteCarFromModalBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition duration-300 hidden">Eliminar</button>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancelBtn" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition duration-300">Cancelar</button>
+                        <button type="submit" id="saveBtn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300">Guardar</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -219,6 +228,16 @@
         </div>
     </div>
     
+    <!-- Image Zoom Modal -->
+    <div id="imageModal" class="fixed inset-0 z-[80] hidden items-center justify-center modal-backdrop p-4">
+        <div class="relative max-w-4xl max-h-full">
+            <img id="largeImageView" class="block max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
+            <button id="closeImageModalBtn" class="absolute -top-2 -right-2 bg-white dark:bg-gray-800 rounded-full p-1 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-sm m-4 modal-content">
@@ -270,6 +289,7 @@
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const logoutBtn = document.getElementById('logoutBtn');
+        const carCountEl = document.getElementById('carCount');
 
         const carList = document.getElementById('carList'), carModal = document.getElementById('carModal'), carForm = document.getElementById('carForm');
         const modalTitle = document.getElementById('modalTitle'), addCarBtn = document.getElementById('addCarBtn'), cancelBtn = document.getElementById('cancelBtn');
@@ -280,12 +300,18 @@
         const saveBtn = document.getElementById('saveBtn');
         const searchInput = document.getElementById('searchInput');
         const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const deleteCarFromModalBtn = document.getElementById('deleteCarFromModalBtn');
         
         // Cropper Modal Elements
         const cropperModal = document.getElementById('cropperModal');
         const imageToCrop = document.getElementById('imageToCrop');
         const cropBtn = document.getElementById('cropBtn');
         const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+        // Image Zoom Modal Elements
+        const imageModal = document.getElementById('imageModal');
+        const largeImageView = document.getElementById('largeImageView');
+        const closeImageModalBtn = document.getElementById('closeImageModalBtn');
 
         // Desktop Controls
         const filterBrand = document.getElementById('filterBrand'), filterSeries = document.getElementById('filterSeries'), sortOrder = document.getElementById('sortOrder');
@@ -309,16 +335,13 @@
         }
 
         function toggleTheme() {
-            const currentTheme = localStorage.getItem('theme') || 'light';
+            const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
             setTheme(currentTheme === 'dark' ? 'light' : 'dark');
         }
 
         // --- INITIALIZATION & AUTHENTICATION ---
         async function initializeAndAuth() {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
-
+            setTheme(localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
             if (!firebaseConfig || !firebaseConfig.projectId) {
                 console.error("Firebase init error: Configuration is missing.");
                 appDiv.innerHTML = `<p class="text-red-500 text-center col-span-full">Error de Configuración: La configuración de Firebase no se ha proporcionado.</p>`;
@@ -335,18 +358,16 @@
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        // User is signed in
                         userId = user.uid;
                         carsCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'cars');
                         listenForCarUpdates();
                         authModal.style.display = 'none';
                         appDiv.classList.remove('hidden');
                     } else {
-                        // User is signed out
                         userId = null;
                         carsCollectionRef = null;
                         allCars = [];
-                        renderCars(); // Clear the list
+                        renderCars();
                         authModal.style.display = 'flex';
                         appDiv.classList.add('hidden');
                         loadingIndicator.classList.add('hidden');
@@ -402,6 +423,7 @@
                 }
             });
             
+            carCountEl.textContent = `Mostrando ${filteredCars.length} de ${allCars.length} autos.`;
             noResultsDiv.classList.toggle('hidden', !(filteredCars.length === 0 && allCars.length > 0));
             
             if (allCars.length === 0 && !loadingIndicator.offsetParent) {
@@ -413,26 +435,47 @@
 
         function createCarCard(car) {
             const card = document.createElement('div');
-            card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all duration-300';
+            card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-500';
             const placeholderImg = `https://placehold.co/400x300/e0e0e0/666?text=${encodeURIComponent(car.model)}`;
             card.innerHTML = `
-                <div class="w-full h-48 bg-white dark:bg-gray-700">
+                <div class="w-full h-48 bg-gray-200 dark:bg-gray-700 cursor-pointer image-zoom-btn">
                     <img src="${car.photoBase64 || placeholderImg}" alt="Foto de ${car.model}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='${placeholderImg}';">
                 </div>
-                <div class="p-4">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">${car.model}</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate">${car.brand} - ${car.series}</p>
-                    <div class="mt-4 space-y-2 text-sm">
-                        <p><strong>N/S:</strong> ${car.serialNumber || 'N/A'}</p>
-                        <p><strong>Precio:</strong> $${parseFloat(car.cost).toFixed(2)}</p>
-                        <p><strong>Comprado en:</strong> ${car.purchasePlace || 'N/A'}</p>
-                        <p><strong>Fecha:</strong> ${car.purchaseDate}</p>
-                    </div>
-                    <div class="mt-4 flex justify-end space-x-2">
-                        <button class="edit-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" data-id="${car.id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-                        <button class="delete-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" data-id="${car.id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 dark:text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
+                <div class="p-4 flex flex-col flex-grow card-body-tappable" data-id="${car.id}">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">${car.model}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">${car.brand}</p>
+                    <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-x-4 gap-y-2 text-sm flex-grow">
+                        <div class="flex items-center gap-2 truncate" title="Serie: ${car.series}">
+                            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                            <span class="text-gray-700 dark:text-gray-300">${car.series}</span>
+                        </div>
+                        <div class="flex items-center gap-2 truncate" title="Número de Serie: ${car.serialNumber || 'N/A'}">
+                            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                            <span class="font-semibold text-gray-700 dark:text-gray-300">${car.serialNumber || 'N/A'}</span>
+                        </div>
+                        <div class="flex items-center gap-2 truncate" title="Fecha de Compra: ${car.purchaseDate}">
+                            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="text-gray-700 dark:text-gray-300">${car.purchaseDate}</span>
+                        </div>
+                        <div class="flex items-center gap-2 truncate" title="Costo: $${parseFloat(car.cost).toFixed(2)}">
+                           <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            <span class="font-semibold text-green-600 dark:text-green-400">$${parseFloat(car.cost).toFixed(2)}</span>
+                        </div>
+                        <div class="col-span-2 flex items-center gap-2 truncate" title="Lugar de Compra: ${car.purchasePlace || 'N/A'}">
+                            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="text-gray-700 dark:text-gray-300">${car.purchasePlace || 'N/A'}</span>
+                        </div>
                     </div>
                 </div>`;
+            
+            card.querySelector('.image-zoom-btn').addEventListener('click', () => {
+                largeImageView.src = car.photoBase64 || placeholderImg;
+                imageModal.style.display = 'flex';
+            });
+            card.querySelector('.card-body-tappable').addEventListener('click', (e) => {
+                const carId = e.currentTarget.dataset.id;
+                openModal(allCars.find(c => c.id === carId));
+            });
             carList.appendChild(card);
         }
 
@@ -483,10 +526,12 @@
                     document.getElementById(id).value = car[id] || '';
                 });
                 photoPreview.src = car.photoBase64 || placeholder;
+                deleteCarFromModalBtn.classList.remove('hidden');
             } else {
                 modalTitle.textContent = 'Agregar Nuevo Auto';
                 document.getElementById('carId').value = '';
                 document.getElementById('purchaseDate').value = new Date().toISOString().split('T')[0];
+                deleteCarFromModalBtn.classList.add('hidden');
             }
             carModal.style.display = 'flex';
         }
@@ -512,7 +557,6 @@
                 if (croppedImageBase64) {
                     carData.photoBase64 = croppedImageBase64;
                 } else if (carId) {
-                    // Keep the old image if no new one is provided during edit
                     const existingCar = allCars.find(c => c.id === carId);
                     if (existingCar && existingCar.photoBase64) {
                         carData.photoBase64 = existingCar.photoBase64;
@@ -533,6 +577,7 @@
         function handleDeleteCar(carId) {
             const carToDelete = allCars.find(c => c.id === carId);
             if (!carToDelete) return;
+            closeModal();
             showConfirm('Eliminar Auto', `¿Estás seguro de que quieres eliminar el ${carToDelete.model}?`, false, async () => {
                 try {
                     await deleteDoc(doc(carsCollectionRef, carId));
@@ -543,7 +588,7 @@
             });
         }
         
-        // --- MODALS (Confirm, Sidebar, Cropper) ---
+        // --- MODALS (Confirm, Sidebar, Cropper, Image Zoom) ---
         function showConfirm(title, message, isAlert = false, onConfirm = () => {}) {
             confirmTitle.textContent = title;
             confirmMessage.textContent = message;
@@ -573,17 +618,15 @@
             }
             cropperModal.style.display = 'none';
         }
+        function closeImageModal() {
+            imageModal.style.display = 'none';
+            largeImageView.src = '';
+        }
 
         // --- EVENT LISTENERS ---
         addCarBtn.addEventListener('click', () => openModal());
         cancelBtn.addEventListener('click', closeModal);
         carForm.addEventListener('submit', handleFormSubmit);
-        carList.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-btn');
-            if (editBtn) openModal(allCars.find(c => c.id === editBtn.dataset.id));
-            const deleteBtn = e.target.closest('.delete-btn');
-            if (deleteBtn) handleDeleteCar(deleteBtn.dataset.id);
-        });
         
         // Auth Listeners
         authToggleBtn.addEventListener('click', () => {
@@ -659,8 +702,83 @@
                 closeCropper();
             }
         });
+
+        // Image Zoom listeners
+        closeImageModalBtn.addEventListener('click', closeImageModal);
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) {
+                closeImageModal();
+            }
+        });
+
+        deleteCarFromModalBtn.addEventListener('click', () => {
+            const carId = document.getElementById('carId').value;
+            if(carId) {
+                handleDeleteCar(carId);
+            }
+        });
         
-        document.addEventListener('DOMContentLoaded', initializeAndAuth);
+        // --- PWA SETUP ---
+        function setupPWA() {
+            const manifest = {
+                "name": "Mi Colección Hot Wheels",
+                "short_name": "HotWheels",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#3b82f6",
+                "description": "Tu garage virtual para administrar todos tus autos.",
+                "icons": [
+                    { "src": "https://placehold.co/192x192/3b82f6/ffffff?text=HW", "sizes": "192x192", "type": "image/png" },
+                    { "src": "https://placehold.co/512x512/3b82f6/ffffff?text=HW", "sizes": "512x512", "type": "image/png" }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            document.querySelector('#manifestLink').setAttribute('href', manifestURL);
+
+            if ('serviceWorker' in navigator) {
+                const swContent = `
+                    const CACHE_NAME = 'hotwheels-cache-v1';
+                    const urlsToCache = [
+                        '/',
+                        '/index.html'
+                    ];
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    console.log('Opened cache');
+                                    return cache.addAll(urlsToCache);
+                                })
+                        );
+                    });
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => {
+                                    if (response) {
+                                        return response;
+                                    }
+                                    return fetch(event.request);
+                                }
+                            )
+                        );
+                    });
+                `;
+                const swBlob = new Blob([swContent], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(swBlob);
+
+                navigator.serviceWorker.register(swUrl)
+                    .then(registration => console.log('Service Worker registered with scope:', registration.scope))
+                    .catch(error => console.log('Service Worker registration failed:', error));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAndAuth();
+            setupPWA();
+        });
     </script>
 </body>
 </html>
