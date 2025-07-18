@@ -268,6 +268,14 @@
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
 
+            // Check if the config is valid before trying to initialize
+            if (!firebaseConfig || !firebaseConfig.projectId) {
+                console.error("Firebase init error: Configuration is missing or invalid.");
+                loadingIndicator.classList.add('hidden');
+                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error de Configuración: La configuración de Firebase no se cargó correctamente. La aplicación no puede iniciarse.</p>`;
+                return; // Stop execution
+            }
+
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -292,7 +300,7 @@
             } catch (error) {
                 console.error("Firebase init error:", error);
                 loadingIndicator.classList.add('hidden');
-                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error al conectar.</p>`;
+                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error al conectar con Firebase: ${error.message}</p>`;
             }
         }
         
