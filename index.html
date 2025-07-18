@@ -40,7 +40,34 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
 
-    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 z-[70] flex items-center justify-center modal-backdrop">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-md m-4 p-8 modal-content">
+            <h2 id="authTitle" class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6">Iniciar Sesión</h2>
+            <form id="authForm">
+                <div class="space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
+                        <input type="email" id="email" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
+                        <input type="password" id="password" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                </div>
+                <p id="authError" class="text-red-500 text-sm mt-4 h-5"></p>
+                <div class="mt-6">
+                    <button type="submit" id="authSubmitBtn" class="w-full btn-gradient text-white font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300">Iniciar Sesión</button>
+                </div>
+            </form>
+            <p class="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+                <span id="authToggleText">¿No tienes una cuenta?</span>
+                <button id="authToggleBtn" class="font-medium text-blue-600 hover:text-blue-500">Regístrate</button>
+            </p>
+        </div>
+    </div>
+
+    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8 hidden">
         <!-- Header -->
         <header class="mb-8 flex items-center justify-between">
             <div></div> <!-- Left spacer -->
@@ -50,6 +77,9 @@
             </div>
             <div class="flex items-center gap-2">
                 <button id="themeToggleBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"></button>
+                <button id="logoutBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700" title="Cerrar Sesión">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
                 <button id="hamburgerBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 lg:hidden">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
@@ -209,7 +239,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- CONFIGURATION ---
         const firebaseConfig = {
@@ -226,8 +256,21 @@
         let db, auth, userId, carsCollectionRef, allCars = [];
         let cropper;
         let croppedImageBase64 = null;
+        let isRegisterMode = false;
 
         // --- UI ELEMENTS ---
+        const appDiv = document.getElementById('app');
+        const authModal = document.getElementById('authModal');
+        const authForm = document.getElementById('authForm');
+        const authTitle = document.getElementById('authTitle');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authToggleBtn = document.getElementById('authToggleBtn');
+        const authToggleText = document.getElementById('authToggleText');
+        const authError = document.getElementById('authError');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const logoutBtn = document.getElementById('logoutBtn');
+
         const carList = document.getElementById('carList'), carModal = document.getElementById('carModal'), carForm = document.getElementById('carForm');
         const modalTitle = document.getElementById('modalTitle'), addCarBtn = document.getElementById('addCarBtn'), cancelBtn = document.getElementById('cancelBtn');
         const loadingIndicator = document.getElementById('loading'), noResultsDiv = document.getElementById('no-results');
@@ -272,17 +315,16 @@
 
         // --- INITIALIZATION & AUTHENTICATION ---
         async function initializeAndAuth() {
-            // Set initial theme
             const savedTheme = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
 
-            // Check if the config is valid before trying to initialize
             if (!firebaseConfig || !firebaseConfig.projectId) {
-                console.error("Firebase init error: Configuration is missing or invalid. Please paste your Firebase config object.");
+                console.error("Firebase init error: Configuration is missing.");
+                appDiv.innerHTML = `<p class="text-red-500 text-center col-span-full">Error de Configuración: La configuración de Firebase no se ha proporcionado.</p>`;
+                appDiv.classList.remove('hidden');
                 loadingIndicator.classList.add('hidden');
-                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error de Configuración: La configuración de Firebase no se ha proporcionado. Por favor, edita el archivo HTML y añade tus credenciales.</p>`;
-                return; // Stop execution
+                return;
             }
 
             try {
@@ -293,27 +335,36 @@
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
+                        // User is signed in
                         userId = user.uid;
                         carsCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'cars');
                         listenForCarUpdates();
+                        authModal.style.display = 'none';
+                        appDiv.classList.remove('hidden');
                     } else {
-                        // If no user, sign in anonymously.
-                        signInAnonymously(auth).catch(error => {
-                            console.error("Anonymous sign-in failed:", error);
-                        });
+                        // User is signed out
+                        userId = null;
+                        carsCollectionRef = null;
+                        allCars = [];
+                        renderCars(); // Clear the list
+                        authModal.style.display = 'flex';
+                        appDiv.classList.add('hidden');
+                        loadingIndicator.classList.add('hidden');
                     }
                 });
 
             } catch (error) {
                 console.error("Firebase init error:", error);
+                appDiv.innerHTML = `<p class="text-red-500 text-center col-span-full">Error al conectar con Firebase: ${error.message}</p>`;
+                appDiv.classList.remove('hidden');
                 loadingIndicator.classList.add('hidden');
-                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error al conectar con Firebase: ${error.message}</p>`;
             }
         }
         
         // --- DATA HANDLING ---
         function listenForCarUpdates() {
             if (!carsCollectionRef) return;
+            loadingIndicator.classList.remove('hidden');
             onSnapshot(carsCollectionRef, (snapshot) => {
                 allCars = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 loadingIndicator.classList.add('hidden');
@@ -532,6 +583,38 @@
             if (editBtn) openModal(allCars.find(c => c.id === editBtn.dataset.id));
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn) handleDeleteCar(deleteBtn.dataset.id);
+        });
+        
+        // Auth Listeners
+        authToggleBtn.addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            authTitle.textContent = isRegisterMode ? 'Registrarse' : 'Iniciar Sesión';
+            authSubmitBtn.textContent = isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión';
+            authToggleText.textContent = isRegisterMode ? '¿Ya tienes una cuenta?' : '¿No tienes una cuenta?';
+            authToggleBtn.textContent = isRegisterMode ? 'Inicia Sesión' : 'Regístrate';
+            authError.textContent = '';
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            authError.textContent = '';
+
+            try {
+                if (isRegisterMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                console.error("Auth error:", error.code);
+                authError.textContent = "Error: " + error.message;
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
         });
         
         // Sidebar listeners
