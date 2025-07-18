@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Colección Hot Wheels</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-backdrop, #sidebar-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease;
+        }
+        .modal-content, #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        #sidebar.open {
+            transform: translateX(0);
+        }
+        .btn-gradient {
+            background-image: linear-gradient(to right, #3b82f6, #2563eb);
+        }
+        /* Cropper container style */
+        .img-container {
+            max-height: 60vh;
+        }
+        /* Ensure cropper background is visible in dark mode */
+        .cropper-bg {
+            background-image: none !important;
+        }
+        .cropper-modal {
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Header -->
+        <header class="mb-8 flex items-center justify-between">
+            <div></div> <!-- Left spacer -->
+            <div class="text-center">
+                <h1 class="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400">Mi Colección Hot Wheels</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">Tu garage virtual para administrar todos tus autos.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="themeToggleBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"></button>
+                <button id="hamburgerBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 lg:hidden">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Desktop Controls -->
+            <div class="hidden lg:flex items-center gap-x-6 gap-y-4 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <label for="filterBrand" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Marca:</label>
+                    <select id="filterBrand" class="block w-full pl-3 pr-10 py-1.5 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="filterSeries" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Serie:</label>
+                    <select id="filterSeries" class="block w-full pl-3 pr-10 py-1.5 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                </div>
+                <div class="flex items-center gap-2">
+                     <label for="sortOrder" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Ordenar por:</label>
+                    <select id="sortOrder" class="block w-full pl-3 pr-10 py-1.5 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+                </div>
+            </div>
+            <button id="addCarBtn" class="w-full lg:w-auto btn-gradient text-white font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity duration-300 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                Agregar Auto
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Buscar por modelo...">
+            </div>
+        </div>
+        
+        <div id="loading" class="text-center py-10"><p class="text-gray-500 dark:text-gray-400">Cargando tu colección...</p></div>
+        <div id="carList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        <div id="no-results" class="hidden text-center py-10"><p class="text-gray-500 dark:text-gray-400 text-lg">No se encontraron autos con los filtros actuales.</p></div>
+    </div>
+
+    <!-- Mobile Sidebar -->
+    <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden"></div>
+    <aside id="sidebar" class="fixed top-0 right-0 h-full w-80 max-w-full bg-white dark:bg-gray-800 shadow-xl z-50 transform translate-x-full">
+        <div class="p-4 flex justify-between items-center border-b dark:border-gray-700">
+            <h3 class="text-lg font-semibold">Filtros y Orden</h3>
+            <button id="sidebarCloseBtn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-4 space-y-4">
+            <div>
+                <label for="filterBrandMobile" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por Marca:</label>
+                <select id="filterBrandMobile" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+            </div>
+            <div>
+                <label for="filterSeriesMobile" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por Serie:</label>
+                <select id="filterSeriesMobile" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+            </div>
+            <div>
+                 <label for="sortOrderMobile" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por:</label>
+                <select id="sortOrderMobile" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></select>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Add/Edit Modal -->
+    <div id="carModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto modal-backdrop">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 max-w-4xl m-4 modal-content">
+            <form id="carForm" class="p-6 space-y-4">
+                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Agregar Nuevo Auto</h2>
+                <input type="hidden" id="carId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modelo</label>
+                        <input type="text" id="model" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="brand" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Marca</label>
+                        <input type="text" id="brand" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="series" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Serie</label>
+                        <input type="text" id="series" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="serialNumber" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Número de Serie</label>
+                        <input type="text" id="serialNumber" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Costo</label>
+                        <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="purchaseDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Compra</label>
+                        <input type="date" id="purchaseDate" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="purchasePlace" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lugar de Compra</label>
+                        <input type="text" id="purchasePlace" class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto del Auto</label>
+                        <div class="mt-1 flex items-center gap-4">
+                            <img id="photoPreview" src="https://placehold.co/100x100/e0e0e0/666?text=Foto" class="h-24 w-24 rounded-md object-cover bg-gray-200">
+                            <input type="file" id="photoFile" class="hidden" accept="image/*">
+                            <button type="button" id="selectPhotoBtn" class="bg-white dark:bg-gray-700 dark:hover:bg-gray-600 py-2 px-3 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Seleccionar foto</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition duration-300">Cancelar</button>
+                    <button type="submit" id="saveBtn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropperModal" class="fixed inset-0 z-[60] hidden items-center justify-center modal-backdrop">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-lg m-4 modal-content">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Recortar Imagen</h2>
+                <div class="img-container">
+                    <img id="imageToCrop">
+                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-3 flex justify-end gap-4">
+                <button type="button" id="cancelCropBtn" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                <button type="button" id="cropBtn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Recortar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-sm m-4 modal-content">
+            <div class="p-6">
+                <h3 id="confirmTitle" class="text-lg font-medium text-gray-900 dark:text-gray-100">Confirmar Acción</h3>
+                <p id="confirmMessage" class="mt-2 text-sm text-gray-600 dark:text-gray-400">¿Estás seguro?</p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-lg">
+                <button type="button" id="confirmOkBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Confirmar</button>
+                <button type="button" id="confirmCancelBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper.js Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hotwheels-collector-app';
+        
+        let db, auth, userId, carsCollectionRef, allCars = [];
+        let cropper;
+        let croppedImageBase64 = null;
+
+        // --- UI ELEMENTS ---
+        const carList = document.getElementById('carList'), carModal = document.getElementById('carModal'), carForm = document.getElementById('carForm');
+        const modalTitle = document.getElementById('modalTitle'), addCarBtn = document.getElementById('addCarBtn'), cancelBtn = document.getElementById('cancelBtn');
+        const loadingIndicator = document.getElementById('loading'), noResultsDiv = document.getElementById('no-results');
+        const selectPhotoBtn = document.getElementById('selectPhotoBtn'), photoFileIn = document.getElementById('photoFile'), photoPreview = document.getElementById('photoPreview');
+        const confirmModal = document.getElementById('confirmModal'), confirmTitle = document.getElementById('confirmTitle'), confirmMessage = document.getElementById('confirmMessage');
+        const confirmOkBtn = document.getElementById('confirmOkBtn'), confirmCancelBtn = document.getElementById('confirmCancelBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const searchInput = document.getElementById('searchInput');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        
+        // Cropper Modal Elements
+        const cropperModal = document.getElementById('cropperModal');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropBtn = document.getElementById('cropBtn');
+        const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+        // Desktop Controls
+        const filterBrand = document.getElementById('filterBrand'), filterSeries = document.getElementById('filterSeries'), sortOrder = document.getElementById('sortOrder');
+        // Mobile Sidebar & Controls
+        const hamburgerBtn = document.getElementById('hamburgerBtn'), sidebar = document.getElementById('sidebar'), sidebarOverlay = document.getElementById('sidebar-overlay'), sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        const filterBrandMobile = document.getElementById('filterBrandMobile'), filterSeriesMobile = document.getElementById('filterSeriesMobile'), sortOrderMobile = document.getElementById('sortOrderMobile');
+
+        // --- THEME HANDLING ---
+        const sunIcon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
+        const moonIcon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeToggleBtn.innerHTML = sunIcon;
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleBtn.innerHTML = moonIcon;
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        // --- INITIALIZATION & AUTHENTICATION ---
+        async function initializeAndAuth() {
+            // Set initial theme
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug');
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        carsCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'cars');
+                        listenForCarUpdates();
+                    } else {
+                        loadingIndicator.classList.add('hidden');
+                        carList.innerHTML = `<p class="text-yellow-500 text-center col-span-full">Autenticando...</p>`;
+                    }
+                });
+
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) await signInWithCustomToken(auth, token);
+                else await signInAnonymously(auth);
+
+            } catch (error) {
+                console.error("Firebase init error:", error);
+                loadingIndicator.classList.add('hidden');
+                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error al conectar.</p>`;
+            }
+        }
+        
+        // --- DATA HANDLING ---
+        function listenForCarUpdates() {
+            if (!carsCollectionRef) return;
+            onSnapshot(carsCollectionRef, (snapshot) => {
+                allCars = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                loadingIndicator.classList.add('hidden');
+                updateFilters();
+                renderCars();
+            }, (error) => {
+                console.error("Error fetching cars:", error);
+                loadingIndicator.classList.add('hidden');
+                carList.innerHTML = `<p class="text-red-500">No se pudo cargar la colección.</p>`;
+            });
+        }
+
+        // --- RENDERING ---
+        function renderCars() {
+            carList.innerHTML = '';
+            let filteredCars = [...allCars];
+
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if (searchTerm) {
+                filteredCars = filteredCars.filter(car => car.model.toLowerCase().includes(searchTerm));
+            }
+
+            const brand = filterBrand.value;
+            if (brand !== 'all' && brand) filteredCars = filteredCars.filter(car => car.brand === brand);
+            
+            const series = filterSeries.value;
+            if (series !== 'all' && series) filteredCars = filteredCars.filter(car => car.series === series);
+
+            filteredCars.sort((a, b) => {
+                switch (sortOrder.value) {
+                    case 'price_asc': return a.cost - b.cost;
+                    case 'price_desc': return b.cost - a.cost;
+                    case 'date_asc': return new Date(a.purchaseDate) - new Date(b.purchaseDate);
+                    case 'date_desc': default: return new Date(b.purchaseDate) - new Date(a.purchaseDate);
+                }
+            });
+            
+            noResultsDiv.classList.toggle('hidden', !(filteredCars.length === 0 && allCars.length > 0));
+            
+            if (allCars.length === 0 && !loadingIndicator.offsetParent) {
+                 carList.innerHTML = `<p class="col-span-full text-center text-gray-500 dark:text-gray-400">Tu colección está vacía. ¡Agrega tu primer auto!</p>`;
+            } else {
+                 filteredCars.forEach(createCarCard);
+            }
+        }
+
+        function createCarCard(car) {
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all duration-300';
+            const placeholderImg = `https://placehold.co/400x300/e0e0e0/666?text=${encodeURIComponent(car.model)}`;
+            card.innerHTML = `
+                <div class="w-full h-48 bg-white dark:bg-gray-700">
+                    <img src="${car.photoBase64 || placeholderImg}" alt="Foto de ${car.model}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                </div>
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">${car.model}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate">${car.brand} - ${car.series}</p>
+                    <div class="mt-4 space-y-2 text-sm">
+                        <p><strong>N/S:</strong> ${car.serialNumber || 'N/A'}</p>
+                        <p><strong>Precio:</strong> $${parseFloat(car.cost).toFixed(2)}</p>
+                        <p><strong>Comprado en:</strong> ${car.purchasePlace || 'N/A'}</p>
+                        <p><strong>Fecha:</strong> ${car.purchaseDate}</p>
+                    </div>
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button class="edit-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" data-id="${car.id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+                        <button class="delete-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" data-id="${car.id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 dark:text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
+                    </div>
+                </div>`;
+            carList.appendChild(card);
+        }
+
+        // --- FILTERS & SORTING ---
+        function updateFilters() {
+            const brands = ['all', ...new Set(allCars.map(car => car.brand).filter(Boolean))].sort();
+            const series = ['all', ...new Set(allCars.map(car => car.series).filter(Boolean))].sort();
+            const sortOptions = {
+                date_desc: 'Más recientes primero', date_asc: 'Más antiguos primero',
+                price_desc: 'Precio (Mayor a Menor)', price_asc: 'Precio (Menor a Mayor)'
+            };
+            const mapToOptions = (arr, allText) => arr.map(item => ({ value: item, text: item === 'all' ? allText : item }));
+            populateSelect(filterBrand, mapToOptions(brands, 'Todas las Marcas'));
+            populateSelect(filterBrandMobile, mapToOptions(brands, 'Todas las Marcas'));
+            populateSelect(filterSeries, mapToOptions(series, 'Todas las Series'));
+            populateSelect(filterSeriesMobile, mapToOptions(series, 'Todas las Series'));
+            populateSelect(sortOrder, Object.entries(sortOptions).map(([value, text]) => ({ value, text })));
+            populateSelect(sortOrderMobile, Object.entries(sortOptions).map(([value, text]) => ({ value, text })));
+        }
+
+        function populateSelect(select, items) {
+            const currentValue = select.value;
+            select.innerHTML = '';
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.value;
+                option.textContent = item.text;
+                select.appendChild(option);
+            });
+            select.value = currentValue;
+        }
+
+        function syncControls(source, destination) {
+            destination.value = source.value;
+        }
+
+        // --- MODAL & FORM HANDLING ---
+        function openModal(car = null) {
+            carForm.reset();
+            photoFileIn.value = '';
+            croppedImageBase64 = null;
+            const placeholder = 'https://placehold.co/100x100/e0e0e0/666?text=Foto';
+            photoPreview.src = placeholder;
+            
+            if (car) {
+                modalTitle.textContent = 'Editar Auto';
+                ['carId', 'model', 'brand', 'series', 'serialNumber', 'cost', 'purchaseDate', 'purchasePlace'].forEach(id => {
+                    document.getElementById(id).value = car[id] || '';
+                });
+                photoPreview.src = car.photoBase64 || placeholder;
+            } else {
+                modalTitle.textContent = 'Agregar Nuevo Auto';
+                document.getElementById('carId').value = '';
+                document.getElementById('purchaseDate').value = new Date().toISOString().split('T')[0];
+            }
+            carModal.style.display = 'flex';
+        }
+
+        function closeModal() { carModal.style.display = 'none'; }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            if (!carsCollectionRef) { showConfirm("Error", "La base de datos no está lista.", true); return; };
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = 'Guardando...';
+
+            const carId = document.getElementById('carId').value;
+            let carData = {
+                model: document.getElementById('model').value, brand: document.getElementById('brand').value,
+                series: document.getElementById('series').value, serialNumber: document.getElementById('serialNumber').value,
+                cost: parseFloat(document.getElementById('cost').value), purchaseDate: document.getElementById('purchaseDate').value,
+                purchasePlace: document.getElementById('purchasePlace').value,
+            };
+
+            try {
+                if (croppedImageBase64) {
+                    carData.photoBase64 = croppedImageBase64;
+                } else if (carId) {
+                    // Keep the old image if no new one is provided during edit
+                    const existingCar = allCars.find(c => c.id === carId);
+                    if (existingCar && existingCar.photoBase64) {
+                        carData.photoBase64 = existingCar.photoBase64;
+                    }
+                }
+                if (carId) await updateDoc(doc(carsCollectionRef, carId), carData);
+                else await addDoc(carsCollectionRef, carData);
+                closeModal();
+            } catch (error) {
+                console.error("Error saving car:", error);
+                showConfirm("Error", `No se pudo guardar el auto: ${error.message}`, true);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Guardar';
+            }
+        }
+        
+        function handleDeleteCar(carId) {
+            const carToDelete = allCars.find(c => c.id === carId);
+            if (!carToDelete) return;
+            showConfirm('Eliminar Auto', `¿Estás seguro de que quieres eliminar el ${carToDelete.model}?`, false, async () => {
+                try {
+                    await deleteDoc(doc(carsCollectionRef, carId));
+                } catch (error) {
+                    console.error("Error deleting car:", error);
+                    showConfirm("Error", `No se pudo eliminar el auto: ${error.message}`, true);
+                }
+            });
+        }
+        
+        // --- MODALS (Confirm, Sidebar, Cropper) ---
+        function showConfirm(title, message, isAlert = false, onConfirm = () => {}) {
+            confirmTitle.textContent = title;
+            confirmMessage.textContent = message;
+            confirmOkBtn.onclick = () => { closeConfirm(); onConfirm(); };
+            confirmCancelBtn.onclick = closeConfirm;
+            confirmCancelBtn.classList.toggle('hidden', isAlert);
+            confirmOkBtn.textContent = isAlert ? 'OK' : 'Confirmar';
+            confirmModal.style.display = 'flex';
+        }
+        function closeConfirm() { confirmModal.style.display = 'none'; }
+        function openSidebar() { sidebarOverlay.classList.remove('hidden'); sidebar.classList.add('open'); }
+        function closeSidebar() { sidebarOverlay.classList.add('hidden'); sidebar.classList.remove('open'); }
+        
+        function openCropper(imageSrc) {
+            imageToCrop.src = imageSrc;
+            cropperModal.style.display = 'flex';
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: 4 / 3,
+                viewMode: 1,
+                background: false,
+            });
+        }
+        function closeCropper() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            cropperModal.style.display = 'none';
+        }
+
+        // --- EVENT LISTENERS ---
+        addCarBtn.addEventListener('click', () => openModal());
+        cancelBtn.addEventListener('click', closeModal);
+        carForm.addEventListener('submit', handleFormSubmit);
+        carList.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-btn');
+            if (editBtn) openModal(allCars.find(c => c.id === editBtn.dataset.id));
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) handleDeleteCar(deleteBtn.dataset.id);
+        });
+        
+        // Sidebar listeners
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarCloseBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Control listeners
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        searchInput.addEventListener('input', renderCars);
+        [filterBrand, filterSeries, sortOrder].forEach(el => el.addEventListener('change', () => {
+            syncControls(el, document.getElementById(`${el.id}Mobile`));
+            renderCars();
+        }));
+        [filterBrandMobile, filterSeriesMobile, sortOrderMobile].forEach(el => el.addEventListener('change', () => {
+            syncControls(el, document.getElementById(el.id.replace('Mobile', '')));
+            renderCars();
+        }));
+        
+        selectPhotoBtn.addEventListener('click', () => photoFileIn.click());
+        photoFileIn.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    openCropper(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Cropper listeners
+        cancelCropBtn.addEventListener('click', closeCropper);
+        cropBtn.addEventListener('click', () => {
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 800,
+                    height: 600,
+                });
+                croppedImageBase64 = canvas.toDataURL('image/jpeg');
+                photoPreview.src = croppedImageBase64;
+                closeCropper();
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', initializeAndAuth);
+    </script>
+</body>
+</html>
