@@ -209,10 +209,21 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hotwheels-collector-app';
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhJl4u_kN_Hb2OCPyGn1WiCfjfMCq5R2U",
+            authDomain: "innovanet-639b3.firebaseapp.com",
+            databaseURL: "https://innovanet-639b3-default-rtdb.firebaseio.com",
+            projectId: "innovanet-639b3",
+            storageBucket: "innovanet-639b3.firebasestorage.app",
+            messagingSenderId: "809794876531",
+            appId: "1:809794876531:web:51981cea1a39ac0726e606",
+            measurementId: "G-Q8HQ0RB4VZ"
+        };
+
+        const appId = 'hotwheels-collector-app-public'; // Using a consistent public ID
         
         let db, auth, userId, carsCollectionRef, allCars = [];
         let cropper;
@@ -270,9 +281,9 @@
 
             // Check if the config is valid before trying to initialize
             if (!firebaseConfig || !firebaseConfig.projectId) {
-                console.error("Firebase init error: Configuration is missing or invalid.");
+                console.error("Firebase init error: Configuration is missing or invalid. Please paste your Firebase config object.");
                 loadingIndicator.classList.add('hidden');
-                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error de Configuración: La configuración de Firebase no se cargó correctamente. La aplicación no puede iniciarse.</p>`;
+                carList.innerHTML = `<p class="text-red-500 text-center col-span-full">Error de Configuración: La configuración de Firebase no se ha proporcionado. Por favor, edita el archivo HTML y añade tus credenciales.</p>`;
                 return; // Stop execution
             }
 
@@ -288,14 +299,12 @@
                         carsCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'cars');
                         listenForCarUpdates();
                     } else {
-                        loadingIndicator.classList.add('hidden');
-                        carList.innerHTML = `<p class="text-yellow-500 text-center col-span-full">Autenticando...</p>`;
+                        // If no user, sign in anonymously.
+                        signInAnonymously(auth).catch(error => {
+                            console.error("Anonymous sign-in failed:", error);
+                        });
                     }
                 });
-
-                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (token) await signInWithCustomToken(auth, token);
-                else await signInAnonymously(auth);
 
             } catch (error) {
                 console.error("Firebase init error:", error);
